@@ -1,12 +1,28 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
 from uuid import UUID
+from .StandartModel import StandartModel
+from .RoleEnum import RoleEnum
+from .EstadoEnum import EstadoEnum
+
 class User(StandartModel):
-    #id : UUID index
-    email : str = Field(..., description="User email address")# index
-    name :  str = Field(..., description="User name")
-    firstLastName : Optional[str] = Field(None, description="User first last name")
-    secondLastName : Optional[str] = Field(None, description="User second last name")
-    role : RoleEnum #admin,operador,cliente,trasportista /index
-    estado : EstadoEnum #activo,inactivo,suspendido
+    # id heredado de StandartModel (UUID)
+    email: EmailStr = Field(..., description="User email address", unique=True)
+    password_hash: str = Field(..., description="Hashed password")
+    nombre: str = Field(..., description="User first name")
+    apellido: str = Field(..., description="User last name")
+    role: RoleEnum = Field(..., description="User role")
+    estado: EstadoEnum = Field(default=EstadoEnum.activo, description="User status")
+    
+    class Config:
+        orm_mode = True
+        schema_extra = {
+            "example": {
+                "email": "usuario@ejemplo.com",
+                "nombre": "Juan",
+                "apellido": "Pérez",
+                "role": "cliente",
+                "estado": "activo"
+            }
+        }
 
