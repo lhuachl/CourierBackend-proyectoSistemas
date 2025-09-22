@@ -1,69 +1,62 @@
-# Models module for Courier System
-# Contains all Pydantic models for the MVP Courier application
+# Models module for Courier System - Clean Architecture
+# Exportaciones centralizadas organizadas por dominio
 
-from .StandartModel import StandartModel
+# Modelo base y mixins
+from .base import BaseEntity, TimestampedEntity, StandartModel
+from .base import GeoLocationMixin, ContactInfoMixin, AddressMixin
 
-# Enums
-from .RoleEnum import RoleEnum
-from .EstadoEnum import EstadoEnum
-from .TipoClienteEnum import TipoClienteEnum
-from .TipoVehiculoEnum import TipoVehiculoEnum
-from .EstadoTransportistaEnum import EstadoTransportistaEnum
-from .TipoDireccionEnum import TipoDireccionEnum
-from .EstadoPedidoEnum import EstadoPedidoEnum
-from .PrioridadEnum import PrioridadEnum
-from .EstadoTrackingEnum import EstadoTrackingEnum
-from .MetodoPagoEnum import MetodoPagoEnum
-from .EstadoPagoEnum import EstadoPagoEnum
-from .EstadoFacturaEnum import EstadoFacturaEnum
-from .EstadoRutaEnum import EstadoRutaEnum
+# Enums organizados por categoría
+from .enums import (
+    # Estados
+    EstadoEnum, EstadoPedidoEnum, EstadoTransportistaEnum,
+    EstadoTrackingEnum, EstadoPagoEnum, EstadoFacturaEnum, EstadoRutaEnum,
+    
+    # Tipos
+    TipoClienteEnum, TipoVehiculoEnum, TipoDireccionEnum, MetodoPagoEnum,
+    
+    # Roles y Prioridades
+    RoleEnum, PrioridadEnum,
+)
 
-# Main Models
-from .Users import User
-from .Clientes import Cliente
-from .Transportistas import Transportista
-from .Direcciones import Direccion
-from .Zonas import Zona
-from .Pedidos import Pedido
-from .Tracking import Tracking
-from .Pagos import Pago
-from .Facturas import Factura
-from .Rutas import Ruta
-from .DetalleRutas import DetalleRuta
-from .Calificaciones import Calificacion
-from .Notificaciones import Notificacion
+# Modelos por dominio
+from .usuarios import User
+from .clientes import Cliente, Direccion
+from .pedidos import Pedido, Factura, Pago
+from .transportes import Transportista, Tracking, Ruta, DetalleRuta
+from .geograficos import Zona
+from .auxiliares import Calificacion, Notificacion
 
 __all__ = [
-    # Base Model
+    # Base y Mixins
+    "BaseEntity",
+    "TimestampedEntity", 
     "StandartModel",
+    "GeoLocationMixin",
+    "ContactInfoMixin",
+    "AddressMixin",
     
     # Enums
-    "RoleEnum",
-    "EstadoEnum", 
-    "TipoClienteEnum",
-    "TipoVehiculoEnum",
-    "EstadoTransportistaEnum",
-    "TipoDireccionEnum",
-    "EstadoPedidoEnum",
-    "PrioridadEnum",
-    "EstadoTrackingEnum",
-    "MetodoPagoEnum",
-    "EstadoPagoEnum",
-    "EstadoFacturaEnum",
-    "EstadoRutaEnum",
+    "EstadoEnum", "EstadoPedidoEnum", "EstadoTransportistaEnum",
+    "EstadoTrackingEnum", "EstadoPagoEnum", "EstadoFacturaEnum", "EstadoRutaEnum",
+    "TipoClienteEnum", "TipoVehiculoEnum", "TipoDireccionEnum", "MetodoPagoEnum",
+    "RoleEnum", "PrioridadEnum",
     
-    # Models
+    # Entidades por Dominio
+    # Usuarios
     "User",
-    "Cliente",
-    "Transportista",
-    "Direccion",
+    
+    # Clientes
+    "Cliente", "Direccion",
+    
+    # Pedidos
+    "Pedido", "Factura", "Pago",
+    
+    # Transportes
+    "Transportista", "Tracking", "Ruta", "DetalleRuta",
+    
+    # Geográficos
     "Zona",
-    "Pedido",
-    "Tracking",
-    "Pago",
-    "Factura",
-    "Ruta",
-    "DetalleRuta",
-    "Calificacion",
-    "Notificacion",
+    
+    # Auxiliares
+    "Calificacion", "Notificacion",
 ]
