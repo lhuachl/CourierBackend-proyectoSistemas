@@ -60,4 +60,4 @@ class PedidoService:
 
     def rastrear_pedido(self, numero_tracking: str) -> Optional[Pedido]:
         """Rastrea un pedido por su número de tracking"""
-        return self.pedido_repo.obtener_por_numero_tracking(numero_tracking)
+        return self.pedido_repo.obtener_por_numero_tracking(numero_tracking)    
