@@ -1,13 +1,12 @@
-"""Modelo SQLAlchemy para persistencia de pedidos"""
-from sqlalchemy import Column, String, DateTime, Numeric, Enum as SQLEnum
+"""
+Modelo de persistencia SQLAlchemy para User
+"""
+from sqlalchemy import Column, String, DateTime, Enum as SQLEnum
 from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
-from uuid import uuid4
 import uuid
-
-from models.enums import EstadoPedidoEnum, PrioridadEnum
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -44,26 +43,22 @@ class GUID(TypeDecorator):
             else:
                 return value
 
-class PedidoDB(Base):
-    """Modelo SQLAlchemy para persistencia de pedidos"""
-    __tablename__ = "pedidos"
+class UserDB(Base):
+    """Modelo SQLAlchemy para la tabla de usuarios"""
+    __tablename__ = "users"
     
-    id = Column(GUID(), primary_key=True, default=uuid4)
-    numero_tracking = Column(String, unique=True, nullable=False, index=True)
-    id_cliente = Column(GUID(), nullable=False, index=True)
-    fecha_solicitud = Column(DateTime, nullable=False)
-    fecha_entrega_estimada = Column(DateTime, nullable=False)
-    fecha_entrega_real = Column(DateTime, nullable=True)
-    direccion_origen = Column(GUID(), nullable=False)
-    direccion_destino = Column(GUID(), nullable=False)
-    estado = Column(SQLEnum(EstadoPedidoEnum), nullable=False, index=True)
-    prioridad = Column(SQLEnum(PrioridadEnum), nullable=False)
-    peso = Column(Numeric(10, 2), nullable=False)
-    dimensiones = Column(String, nullable=True)
-    monto_total = Column(Numeric(10, 2), nullable=False)
-    id_transportista = Column(GUID(), nullable=True, index=True)
+    # Campos base
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
+    # Campos específicos de User
+    email = Column(String, unique=True, nullable=False, index=True)
+    password_hash = Column(String, nullable=False)
+    nombre = Column(String, nullable=False)
+    apellido = Column(String, nullable=False)
+    role = Column(String, nullable=False)
+    estado = Column(String, nullable=False, default="activo")
+    
     def __repr__(self):
-        return f"<PedidoDB(id={self.id}, numero_tracking={self.numero_tracking}, estado={self.estado})>"
+        return f"<UserDB(id={self.id}, email={self.email}, role={self.role})>"

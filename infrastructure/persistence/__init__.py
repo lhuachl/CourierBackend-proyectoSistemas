@@ -13,20 +13,24 @@ Componentes:
 """
 
 from .pedido_repository_sqlalchemy import PedidoRepositorySQLAlchemy
+from .user_repository_sqlalchemy import UserRepositorySQLAlchemy
 from .pedido_service_example import PedidoService
-from .models import PedidoDB
-from .mappers import PedidoMapper
+from .models import PedidoDB, UserDB
+from .mappers import PedidoMapper, UserMapper
 
 __all__ = [
     # Repositorios
     "PedidoRepositorySQLAlchemy",
+    "UserRepositorySQLAlchemy",
     
     # Servicios
     "PedidoService",
     
     # Modelos de Persistencia
     "PedidoDB",
+    "UserDB",
     
     # Mappers
     "PedidoMapper",
+    "UserMapper",
 ]

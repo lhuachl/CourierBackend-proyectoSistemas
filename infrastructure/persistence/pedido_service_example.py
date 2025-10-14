@@ -6,12 +6,12 @@ from typing import Optional
 from uuid import UUID
 
 # Interfaces del dominio - NO implementaciones concretas
-from ...domain.repositories.pedido_repository import IPedidoRepository
-from ...domain.repositories.transportista_repository import ITransportistaRepository
+from domain.repositories.pedido_repository import IPedidoRepository
+from domain.repositories.transportista_repository import ITransportistaRepository
 
 # Entidades del modelo
-from ...models.pedidos import Pedido
-from ...models.enums import EstadoPedidoEnum
+from models.pedidos import Pedido
+from models.enums import EstadoPedidoEnum
 
 class PedidoService:
     """Servicio de aplicación para manejar pedidos"""
