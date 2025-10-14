@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from uuid import uuid4
 
-from ....models.enums import EstadoPedidoEnum, PrioridadEnum
+from models.enums import EstadoPedidoEnum, PrioridadEnum
 
 Base = declarative_base()
 

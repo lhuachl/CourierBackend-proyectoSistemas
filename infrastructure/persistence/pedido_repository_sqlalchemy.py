@@ -8,15 +8,15 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 # Interfaces del dominio
-from ...domain.repositories.pedido_repository import IPedidoRepository
+from domain.repositories.pedido_repository import IPedidoRepository
 
 # Entidades del modelo de dominio
-from ...models.pedidos import Pedido
+from models.pedidos import Pedido
 
 # Modelos de persistencia y mappers
-from .models.pedido_db import PedidoDB
-from .mappers.pedido_mapper import PedidoMapper
-from ...models.enums import EstadoPedidoEnum
+from infrastructure.persistence.models.pedido_db import PedidoDB
+from infrastructure.persistence.mappers.pedido_mapper import PedidoMapper
+from models.enums import EstadoPedidoEnum
 
 class PedidoRepositorySQLAlchemy(IPedidoRepository):
     """Implementación SQLAlchemy del repositorio de pedidos

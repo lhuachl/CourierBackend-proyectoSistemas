@@ -1,7 +1,7 @@
 """Mapper para conversión entre entidad Pedido y modelo PedidoDB"""
 from typing import Optional
-from ....models.pedidos import Pedido
-from ..models.pedido_db import PedidoDB
+from models.pedidos import Pedido
+from infrastructure.persistence.models.pedido_db import PedidoDB
 
 class PedidoMapper:
     """Convierte entre entidad de dominio y modelo de persistencia"""
