@@ -14,4 +14,8 @@ wheels/
 *.sqlite
 *.sqlite3
 
+# Environment variables
+.env
+.env.local
+
 # Markdown files

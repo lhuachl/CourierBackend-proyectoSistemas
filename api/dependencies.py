@@ -1,6 +1,8 @@
 """
 Dependencias de FastAPI para inyección
 """
+import os
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import create_engine
@@ -13,9 +15,18 @@ from infrastructure.persistence.user_repository_sqlalchemy import UserRepository
 from infrastructure.persistence.pedido_repository_sqlalchemy import PedidoRepositorySQLAlchemy
 from models.usuarios import User
 
-# Configuración de base de datos (cambiar en producción)
-DATABASE_URL = "sqlite:///./courier.db"  # SQLite para desarrollo
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# Cargar variables de entorno desde .env
+load_dotenv()
+
+# Configuración de base de datos desde variables de entorno
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./courier.db")
+
+# Configurar engine según el tipo de base de datos
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Esquema de seguridad
