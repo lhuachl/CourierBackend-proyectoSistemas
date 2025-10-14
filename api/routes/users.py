@@ -7,6 +7,7 @@ from uuid import UUID
 
 from api.schemas import UserResponse, UserUpdate
 from api.dependencies import get_user_repository, get_current_user, require_admin
+from api.utils import get_enum_value
 from infrastructure.persistence.user_repository_sqlalchemy import UserRepositorySQLAlchemy
 from models.usuarios import User
 from models.enums import EstadoEnum
@@ -23,8 +24,8 @@ def get_current_user_info(current_user: User = Depends(get_current_user)):
         email=current_user.email,
         nombre=current_user.nombre,
         apellido=current_user.apellido,
-        role=current_user.role.value,
-        estado=current_user.estado.value,
+        role=get_enum_value(current_user.role),
+        estado=get_enum_value(current_user.estado),
         created_at=current_user.created_at
     )
 
@@ -73,8 +74,8 @@ def get_user(
         email=user.email,
         nombre=user.nombre,
         apellido=user.apellido,
-        role=user.role.value,
-        estado=user.estado.value,
+        role=get_enum_value(user.role),
+        estado=get_enum_value(user.estado),
         created_at=user.created_at
     )
 
@@ -126,8 +127,8 @@ def update_user(
         email=user.email,
         nombre=user.nombre,
         apellido=user.apellido,
-        role=user.role.value,
-        estado=user.estado.value,
+        role=get_enum_value(user.role),
+        estado=get_enum_value(user.estado),
         created_at=user.created_at
     )
 

@@ -6,6 +6,10 @@ from infrastructure.persistence.models.user_db import UserDB
 from models.usuarios import User
 from models.enums import RoleEnum, EstadoEnum
 
+def get_enum_value(obj):
+    """Helper para obtener valor de enum o string"""
+    return obj.value if hasattr(obj, 'value') else obj
+
 class UserMapper:
     """Convierte entre la entidad de dominio User y el modelo de persistencia UserDB"""
     
@@ -49,6 +53,6 @@ class UserMapper:
             password_hash=user.password_hash,
             nombre=user.nombre,
             apellido=user.apellido,
-            role=user.role.value,
-            estado=user.estado.value
+            role=get_enum_value(user.role),
+            estado=get_enum_value(user.estado)
         )

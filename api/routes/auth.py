@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from api.schemas import LoginRequest, RegisterRequest, TokenResponse
 from api.dependencies import get_user_repository
+from api.utils import get_enum_value
 from infrastructure.auth import (
     verify_password,
     get_password_hash,
@@ -54,8 +55,9 @@ def login(
     
     # Crear token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    role_value = user.role.value if hasattr(user.role, 'value') else user.role
     access_token = create_access_token(
-        data={"sub": str(user.id), "email": user.email, "role": user.role.value},
+        data={"sub": str(user.id), "email": user.email, "role": role_value},
         expires_delta=access_token_expires
     )
     
@@ -64,7 +66,7 @@ def login(
         token_type="bearer",
         user_id=str(user.id),
         email=user.email,
-        role=user.role.value
+        role=role_value
     )
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -109,8 +111,9 @@ def register(
     
     # Crear token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    role_value = get_enum_value(user.role)
     access_token = create_access_token(
-        data={"sub": str(user.id), "email": user.email, "role": user.role.value},
+        data={"sub": str(user.id), "email": user.email, "role": role_value},
         expires_delta=access_token_expires
     )
     
@@ -119,5 +122,5 @@ def register(
         token_type="bearer",
         user_id=str(user.id),
         email=user.email,
-        role=user.role.value
+        role=role_value
     )

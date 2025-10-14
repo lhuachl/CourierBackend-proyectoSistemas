@@ -8,6 +8,7 @@ from datetime import datetime
 
 from api.schemas import PedidoCreate, PedidoUpdate, PedidoResponse
 from api.dependencies import get_pedido_repository, get_current_user
+from api.utils import get_enum_value
 from infrastructure.persistence.pedido_repository_sqlalchemy import PedidoRepositorySQLAlchemy
 from models.usuarios import User
 from models.pedidos import Pedido
@@ -62,8 +63,8 @@ def create_pedido(
         id=str(pedido.id),
         numero_tracking=pedido.numero_tracking,
         id_cliente=str(pedido.id_cliente),
-        estado=pedido.estado.value,
-        prioridad=pedido.prioridad.value,
+        estado=get_enum_value(pedido.estado),
+        prioridad=get_enum_value(pedido.prioridad),
         peso=pedido.peso,
         monto_total=pedido.monto_total,
         fecha_solicitud=pedido.fecha_solicitud,
@@ -104,8 +105,8 @@ def get_pedido(
         id=str(pedido.id),
         numero_tracking=pedido.numero_tracking,
         id_cliente=str(pedido.id_cliente),
-        estado=pedido.estado.value,
-        prioridad=pedido.prioridad.value,
+        estado=get_enum_value(pedido.estado),
+        prioridad=get_enum_value(pedido.prioridad),
         peso=pedido.peso,
         monto_total=pedido.monto_total,
         fecha_solicitud=pedido.fecha_solicitud,
@@ -133,8 +134,8 @@ def get_pedido_by_tracking(
         id=str(pedido.id),
         numero_tracking=pedido.numero_tracking,
         id_cliente=str(pedido.id_cliente),
-        estado=pedido.estado.value,
-        prioridad=pedido.prioridad.value,
+        estado=get_enum_value(pedido.estado),
+        prioridad=get_enum_value(pedido.prioridad),
         peso=pedido.peso,
         monto_total=pedido.monto_total,
         fecha_solicitud=pedido.fecha_solicitud,
@@ -159,9 +160,9 @@ def list_pedidos(
     if current_user.is_admin():
         # Admin ve pedidos pendientes por defecto
         pedidos = pedido_repo.obtener_pendientes()
-    elif current_user.role.value == "cliente":
+    elif get_enum_value(current_user.role) == "cliente":
         pedidos = pedido_repo.obtener_por_cliente(current_user.id)
-    elif current_user.role.value == "transportista":
+    elif get_enum_value(current_user.role) == "transportista":
         pedidos = pedido_repo.obtener_por_transportista(current_user.id)
     else:
         pedidos = []
@@ -171,8 +172,8 @@ def list_pedidos(
             id=str(p.id),
             numero_tracking=p.numero_tracking,
             id_cliente=str(p.id_cliente),
-            estado=p.estado.value,
-            prioridad=p.prioridad.value,
+            estado=get_enum_value(p.estado),
+            prioridad=get_enum_value(p.prioridad),
             peso=p.peso,
             monto_total=p.monto_total,
             fecha_solicitud=p.fecha_solicitud,
@@ -237,8 +238,8 @@ def update_pedido(
         id=str(pedido.id),
         numero_tracking=pedido.numero_tracking,
         id_cliente=str(pedido.id_cliente),
-        estado=pedido.estado.value,
-        prioridad=pedido.prioridad.value,
+        estado=get_enum_value(pedido.estado),
+        prioridad=get_enum_value(pedido.prioridad),
         peso=pedido.peso,
         monto_total=pedido.monto_total,
         fecha_solicitud=pedido.fecha_solicitud,
