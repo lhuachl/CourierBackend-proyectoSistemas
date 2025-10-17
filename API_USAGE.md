@@ -10,7 +10,11 @@
 
 ```bash
 # Instalar dependencias
-pip install fastapi sqlalchemy pydantic "pydantic[email]" passlib python-jose python-multipart uvicorn
+pip install fastapi sqlalchemy pydantic "pydantic[email]" passlib python-jose python-multipart uvicorn python-dotenv
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus valores (ver ENV.md para detalles)
 
 # Iniciar el servidor
 python main.py
@@ -241,12 +245,33 @@ curl -X GET http://localhost:8000/pedidos/ \
 
 ## ⚙️ Configuración
 
-### Base de Datos
-Por defecto, la aplicación usa SQLite (`courier.db`). Para usar PostgreSQL en producción:
+### Variables de Entorno
+El proyecto ahora utiliza variables de entorno para la configuración. Ver **[ENV.md](ENV.md)** para documentación completa.
 
-1. Modificar `api/dependencies.py`:
-```python
-DATABASE_URL = "postgresql://user:password@localhost/courier_db"
+**Configuración rápida:**
+
+1. Copiar el archivo de ejemplo:
+```bash
+cp .env.example .env
+```
+
+2. Editar `.env` con tus valores:
+```bash
+DATABASE_URL=postgresql://postgres:your_password@db.your_project.supabase.co:5432/postgres
+SECRET_KEY=your-secret-key-here
+```
+
+3. Generar una SECRET_KEY segura:
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+### Base de Datos
+Por defecto, la aplicación usa SQLite (`courier.db`). Para usar PostgreSQL/Supabase:
+
+1. Configurar `DATABASE_URL` en el archivo `.env`:
+```
+DATABASE_URL=postgresql://user:password@host:port/database
 ```
 
 2. Instalar driver de PostgreSQL:
@@ -254,18 +279,7 @@ DATABASE_URL = "postgresql://user:password@localhost/courier_db"
 pip install psycopg2-binary
 ```
 
-### Seguridad
-Para producción, cambiar el `SECRET_KEY` en `infrastructure/auth/security.py`:
-
-```python
-# Usar una clave generada aleatoriamente
-SECRET_KEY = "tu-clave-secreta-muy-larga-y-aleatoria-generada-de-forma-segura"
-```
-
-Generar clave segura:
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
+Ver [ENV.md](ENV.md) para instrucciones detalladas de configuración con Supabase.
 
 ### CORS
 Configurar orígenes permitidos en `main.py`:
