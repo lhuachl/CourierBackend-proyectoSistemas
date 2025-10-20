@@ -17,29 +17,53 @@ El proyecto utiliza un archivo `.env` para almacenar las variables de entorno se
 
 ## Variables Requeridas
 
-### DATABASE_URL (Requerida)
+### Opción 1: Configuración con Session Pooler (Recomendado)
 
-**Descripción:** URL de conexión a la base de datos PostgreSQL de Supabase.
+Supabase recomienda usar el Session Pooler para conexiones con SQLAlchemy. Esta configuración utiliza parámetros individuales:
+
+**Variables requeridas:**
+```
+user=postgres.hlmngthhnvbdvbrxukqy
+password=[YOUR_PASSWORD]
+host=aws-1-us-east-2.pooler.supabase.com
+port=5432
+dbname=postgres
+```
+
+**Dónde encontrar los valores en Supabase:**
+1. Ve a tu proyecto en Supabase
+2. Navega a `Settings` → `Database` → `Connection Pooling`
+3. Selecciona "Session" mode
+4. Encontrarás:
+   - **Host:** `aws-X-us-east-Y.pooler.supabase.com` (varía según tu región)
+   - **Port:** `5432`
+   - **Database:** `postgres`
+   - **User:** `postgres.[project-ref]` (ejemplo: `postgres.hlmngthhnvbdvbrxukqy`)
+   - **Password:** La contraseña de tu base de datos
+
+**Ventajas del Session Pooler:**
+- Mejor rendimiento con SQLAlchemy
+- Gestión automática de conexiones
+- Uso eficiente de recursos
+- Configuración con `NullPool` para evitar conflictos de pooling
+
+### Opción 2: Conexión Directa (Legacy)
+
+**DATABASE_URL (Opcional - Retrocompatibilidad)**
+
+**Descripción:** URL de conexión completa a la base de datos PostgreSQL de Supabase.
 
 **Formato:**
 ```
 DATABASE_URL=postgresql://[user]:[password]@[host]:[port]/[database]
 ```
 
-**Ejemplo para Supabase:**
+**Ejemplo para Supabase (Direct Connection):**
 ```
 DATABASE_URL=postgresql://postgres:tu_password_aqui@db.abcdefghijk.supabase.co:5432/postgres
 ```
 
-**Dónde encontrar los valores en Supabase:**
-1. Ve a tu proyecto en Supabase
-2. Navega a `Settings` → `Database`
-3. En la sección "Connection string", encontrarás:
-   - **Host:** `db.abcdefghijk.supabase.co` (donde `abcdefghijk` es tu ID de proyecto)
-   - **Port:** `5432`
-   - **Database name:** `postgres`
-   - **User:** `postgres`
-   - **Password:** La contraseña que configuraste al crear el proyecto
+**Nota:** Si defines los parámetros individuales (user, password, host, port, dbname), estos tendrán prioridad sobre DATABASE_URL.
 
 **Nota importante para el plan gratuito de Supabase:**
 - La base de datos se pausará automáticamente después de 1 semana de inactividad
@@ -138,10 +162,39 @@ CREATE TABLE "Usuarios" (
 -- [El resto del esquema SQL proporcionado en el problema...]
 ```
 
+## Configuración de Connection Pooling
+
+Este proyecto está configurado para usar `NullPool` de SQLAlchemy cuando se conecta a PostgreSQL (incluyendo Supabase). Esto es importante porque:
+
+1. **Supabase Session Pooler** ya gestiona las conexiones en el servidor
+2. Evita conflictos entre el pooling del cliente (SQLAlchemy) y el pooling del servidor (Supabase)
+3. Es la configuración recomendada en la documentación de SQLAlchemy: https://docs.sqlalchemy.org/en/20/core/pooling.html#switching-pool-implementations
+
+La configuración se aplica automáticamente cuando usas parámetros individuales o DATABASE_URL con PostgreSQL.
+
 ## Ejemplo de archivo .env completo
 
+### Con Session Pooler (Recomendado):
 ```bash
-# Base de datos Supabase
+# Base de datos Supabase - Session Pooler
+user=postgres.hlmngthhnvbdvbrxukqy
+password=mi_password_segura
+host=aws-1-us-east-2.pooler.supabase.com
+port=5432
+dbname=postgres
+
+# Seguridad JWT
+SECRET_KEY=Xk9mP2nQ4rT6wY8zA1bC3dE5fG7hJ9kL0mN2oP4qR6s
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# CORS (Opcional - solo para producción)
+# ALLOWED_ORIGINS=https://mi-frontend.com
+```
+
+### Con DATABASE_URL (Conexión Directa - Legacy):
+```bash
+# Base de datos Supabase - Direct Connection
 DATABASE_URL=postgresql://postgres:mi_password_segura@db.xyz123.supabase.co:5432/postgres
 
 # Seguridad JWT
@@ -157,19 +210,25 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 Para verificar que las variables de entorno están configuradas correctamente:
 
-1. Inicia el servidor:
+1. **Probar la conexión a la base de datos:**
+   ```bash
+   python test_supabase_connection.py
+   ```
+   Este script valida que la configuración del Session Pooler es correcta.
+
+2. **Inicia el servidor:**
    ```bash
    python main.py
    ```
 
-2. Verifica que no haya errores de conexión a la base de datos en la consola.
+3. **Verifica que no haya errores** de conexión a la base de datos en la consola.
 
-3. Accede a la documentación interactiva:
+4. **Accede a la documentación interactiva:**
    ```
    http://localhost:8000/docs
    ```
 
-4. Prueba el endpoint de health check:
+5. **Prueba el endpoint de health check:**
    ```bash
    curl http://localhost:8000/health
    ```
