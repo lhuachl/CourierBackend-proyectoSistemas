@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.pool import NullPool
 from typing import Generator, Optional
 from uuid import UUID
 
@@ -19,13 +20,28 @@ from models.usuarios import User
 load_dotenv()
 
 # Configuración de base de datos desde variables de entorno
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./courier.db")
+# Support both individual connection parameters (for Supabase Session Pooler)
+# and full DATABASE_URL (for backward compatibility)
+USER = os.getenv("user")
+PASSWORD = os.getenv("password")
+HOST = os.getenv("host")
+PORT = os.getenv("port")
+DBNAME = os.getenv("dbname")
+
+# Build DATABASE_URL from individual parameters if provided, otherwise use DATABASE_URL directly
+if all([USER, PASSWORD, HOST, PORT, DBNAME]):
+    DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
+else:
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./courier.db")
 
 # Configurar engine según el tipo de base de datos
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
-    engine = create_engine(DATABASE_URL)
+    # For Supabase Session Pooler, use NullPool to disable client-side connection pooling
+    # as recommended by SQLAlchemy documentation
+    # https://docs.sqlalchemy.org/en/20/core/pooling.html#switching-pool-implementations
+    engine = create_engine(DATABASE_URL, poolclass=NullPool)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
