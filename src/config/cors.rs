@@ -1,4 +1,4 @@
-use tower_http::cors::{CorsLayer, AllowOrigin};
+use tower_http::cors::{CorsLayer, AllowOrigin, AllowHeaders};
 
 /// Configurar CORS para desarrollo y producción
 pub fn create_cors_layer(environment: &str) -> CorsLayer {
@@ -45,7 +45,11 @@ pub fn create_cors_layer(environment: &str) -> CorsLayer {
                     ]),
                 )
                 .allow_methods(tower_http::cors::AllowMethods::any())
-                .allow_headers(tower_http::cors::AllowHeaders::any())
+                .allow_headers(AllowHeaders::list(vec![
+                    "authorization".parse().expect("Invalid header"),
+                    "content-type".parse().expect("Invalid header"),
+                    "accept".parse().expect("Invalid header"),
+                ]))
                 .allow_credentials(true)
         }
         "production" => {
@@ -64,7 +68,11 @@ pub fn create_cors_layer(environment: &str) -> CorsLayer {
                     ]),
                 )
                 .allow_methods(tower_http::cors::AllowMethods::any())
-                .allow_headers(tower_http::cors::AllowHeaders::any())
+                .allow_headers(AllowHeaders::list(vec![
+                    "authorization".parse().expect("Invalid header"),
+                    "content-type".parse().expect("Invalid header"),
+                    "accept".parse().expect("Invalid header"),
+                ]))
                 .allow_credentials(true)
         }
         _ => {
@@ -74,7 +82,11 @@ pub fn create_cors_layer(environment: &str) -> CorsLayer {
                     vec!["http://localhost:5173".parse().expect("Invalid origin")],
                 ))
                 .allow_methods(tower_http::cors::AllowMethods::any())
-                .allow_headers(tower_http::cors::AllowHeaders::any())
+                .allow_headers(AllowHeaders::list(vec![
+                    "authorization".parse().expect("Invalid header"),
+                    "content-type".parse().expect("Invalid header"),
+                    "accept".parse().expect("Invalid header"),
+                ]))
                 .allow_credentials(true)
         }
     }
