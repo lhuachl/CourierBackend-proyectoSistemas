@@ -8,6 +8,7 @@ use std::sync::Arc;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 use utoipa::openapi::security::{SecurityScheme, Http, HttpAuthScheme};
+use tower_http::trace::TraceLayer;
 
 use crate::application::dto::{
     CreateUserDTO, UpdateUserDTO, UserResponseDTO, UpdateUserRoleDTO, UpdateUserStatusDTO, UsersListResponseDTO,
@@ -23,6 +24,7 @@ use crate::application::dto::{
 use crate::application::services::{UserService, PedidoService, PerfilClienteService, ProductoService, DireccionService};
 use crate::domain::repositories::{UserRepository, PedidoRepository, PerfilClienteRepository, ProductoRepository, DireccionRepository};
 use crate::infrastructure::repositories::{UserRepositoryImpl, PedidoRepositoryImpl, PerfilClienteRepositoryImpl, ProductoRepositoryImpl, DireccionRepositoryImpl};
+use crate::config::create_cors_layer;
 use crate::presentation::handlers::{
     get_current_user, CurrentUserResponse, __path_get_current_user,
     list_users, get_user, create_user, update_user, update_user_role, update_user_status, delete_user,
@@ -169,6 +171,12 @@ impl utoipa::Modify for SecurityAddon {
 }
 
 pub fn create_routes(pool: PgPool) -> Router {
+    // Obtener entorno (default: "development")
+    let environment = std::env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+    
+    // Crear CORS layer
+    let cors = create_cors_layer(&environment);
+
     // Crear repositorio y service de usuarios (Dependency Injection)
     let user_repo: Arc<dyn UserRepository> = Arc::new(UserRepositoryImpl::new(pool.clone()));
     let user_service = Arc::new(UserService::new(user_repo));
@@ -286,6 +294,8 @@ pub fn create_routes(pool: PgPool) -> Router {
         .merge(direcciones_routes)
         .merge(almacenes_public_routes)
         .merge(admin_almacenes_routes)
+        .layer(cors)
+        .layer(TraceLayer::new_for_http())
         .with_state(pool)
 }
 
