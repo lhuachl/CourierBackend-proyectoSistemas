@@ -11,6 +11,12 @@ Este directorio contiene la documentación técnica del backend.
 | [AUTH.md](AUTH.md) | Sistema de autenticación y autorización |
 | [DATABASE.md](DATABASE.md) | Schema de BD y migraciones |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Guía de despliegue |
+| [MVP_REQUERIMIENTOS.md](MVP_REQUERIMIENTOS.md) | Requisitos del MVP, roles, flujos y ejemplo completo |
+| [USUARIOS.md](USUARIOS.md) | Módulo de gestión de usuarios (admin) |
+| [PEDIDOS.md](PEDIDOS.md) | Módulo de pedidos |
+| [PRODUCTOS.md](PRODUCTOS.md) | Módulo de productos |
+| [DIRECCIONES.md](DIRECCIONES.md) | Módulo de direcciones |
+| [IMPLEMENTACIONES_PENDIENTES.md](IMPLEMENTACIONES_PENDIENTES.md) | Estado de módulos pendientes |
 
 ## Swagger UI
 

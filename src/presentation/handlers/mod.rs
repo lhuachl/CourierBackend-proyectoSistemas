@@ -6,6 +6,10 @@ pub mod perfil_cliente_handler;
 pub mod direccion_handler;
 
 pub use auth_handler::{get_current_user, CurrentUserResponse, __path_get_current_user};
+pub use user_handler::{
+    list_users, get_user, create_user, update_user, update_user_role, update_user_status, delete_user,
+    __path_list_users, __path_get_user, __path_create_user, __path_update_user, __path_update_user_role, __path_update_user_status, __path_delete_user,
+};
 pub use pedido_handler::{
     list_pedidos, get_pedido, create_pedido, 
     update_estado_pedido, assign_transportista, cancel_pedido,
