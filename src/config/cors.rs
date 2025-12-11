@@ -1,5 +1,4 @@
 use tower_http::cors::{CorsLayer, AllowOrigin};
-use std::str::FromStr;
 
 /// Configurar CORS para desarrollo y producción
 pub fn create_cors_layer(environment: &str) -> CorsLayer {
