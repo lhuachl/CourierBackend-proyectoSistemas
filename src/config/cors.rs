@@ -8,26 +8,35 @@ pub fn create_cors_layer(environment: &str) -> CorsLayer {
             CorsLayer::permissive()
                 .allow_origin(
                     AllowOrigin::list(vec![
-                        // Frontend Web local
+                        // Frontend Web local — Vite dev
                         "http://localhost:5173"
                             .parse()
                             .expect("Invalid origin"),
                         "http://localhost:5174"
                             .parse()
                             .expect("Invalid origin"),
-                        // Tauri dev
+                        // Tauri dev — múltiples puertos comunes
+                        "http://localhost:1420"
+                            .parse()
+                            .expect("Invalid origin"),
+                        "http://localhost:1421"
+                            .parse()
+                            .expect("Invalid origin"),
                         "http://localhost:1430"
                             .parse()
                             .expect("Invalid origin"),
                         "tauri://localhost"
                             .parse()
                             .expect("Invalid origin"),
-                        // Swagger UI
+                        // Swagger UI y backend
                         "http://localhost:3000"
                             .parse()
                             .expect("Invalid origin"),
                         // IP local (común en testing)
                         "http://127.0.0.1:5173"
+                            .parse()
+                            .expect("Invalid origin"),
+                        "http://127.0.0.1:1420"
                             .parse()
                             .expect("Invalid origin"),
                         "http://127.0.0.1:3000"
