@@ -166,9 +166,3 @@ Ejemplo (Orders):
 
 ---
 
-Si quieres, puedo ahora:
-- Generar el `template` inicial de `src/features/*` (scaffold).
-- Crear un `package.json` y `tauri.conf.json` de ejemplo.
-- Generar `.env.example` listo para el repositorio.
-
-Indica cuál prefieres y lo creo inmediatamente.
