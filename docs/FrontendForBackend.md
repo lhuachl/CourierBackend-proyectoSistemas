@@ -1,322 +1,174 @@
-# Frontend para el Backend — React (Vite) + Tauri
+# Frontend for Backend — CourierApp Client (Omnicanal)
 
-## Resumen ejecutivo
-
-Objetivo: Single codebase multiplataforma (Windows/Mac/Linux + web fallback) con React (Vite) + Tauri.
-
-Enfoque: Arquitectura basada en features (cada feature contiene UI, hooks, types, services y tests). El API client se genera desde el OpenAPI del backend.
-
-Prioridad inicial: MVP funcional (autenticación, catálogo, checkout, pedidos, perfil, direcciones); posteriormente, panel admin y features nativos.
+**Versión:** 2.0.0 · **Stack:** Tauri v2 + React + TypeScript (strict) · **Targets:** Web (SPA), Desktop (Win/Mac/Linux), Mobile (iOS/Android)
 
 ---
 
-## 1. Estructura del proyecto (feature-based)
+## 1. Visión Ejecutiva
 
-Raíz propuesta:
+Objetivo
+
+Implementar una interfaz unificada (single codebase) que consuma los 49 endpoints actuales del Backend, priorizando velocidad de desarrollo y robustez operativa.
+
+Filosofía de diseño
+
+- Minimalismo radical: no añadir dependencias que no resuelvan un problema crítico.
+- Server-State First: la UI replica la caché del servidor; minimizar estado global en el cliente.
+- TDD-Kanban: desarrollo guiado por pruebas de aceptación (no por historias vagas).
+- Offline-ready: soporte para operaciones en zonas sin cobertura (SQLite local + optimistic updates).
+
+---
+
+## 2. "Killer" Tech Stack (justificación)
+
+| Capa | Tecnología | Justificación técnica |
+|------|------------|-----------------------|
+| Core & Runtime | Tauri v2 + Vite | Unifica web y binarios nativos; tamaño de binarios reducido; permite build mobile con adaptaciones. |
+| Lenguaje | TypeScript (strict) | Reduce bugs en tiempo de compilación; tipos generados desde OpenAPI. |
+| UI Framework | React 18+ | Ecosistema maduro y rendimiento. |
+| Estilos & UI | TailwindCSS + shadcn/ui | Sin runtime CSS-in-JS; componentes accesibles y reutilizables. |
+| Data fetching | TanStack Query v5 | Caché, reintentos, sincronización y estrategias offline-first. |
+| State manager | Zustand | Minimalista para el poco estado global necesario. |
+| Routing | TanStack Router | Enrutamiento type-safe. |
+| Forms | React Hook Form + Zod | Rendimiento y validación compartida con backend. |
+
+---
+
+## 3. Configuración del entorno (.env) — ejemplo
+
+> Nota: no subir secretos al repositorio. Usar vault/secrets en CI.
+
+```env
+# =================================================================
+# 🌐 API & NETWORK
+# =================================================================
+VITE_API_BASE_URL=https://api.tu-courier-backend.com/v1
+VITE_API_TIMEOUT=15000
+VITE_API_RETRY_COUNT=2
+
+# =================================================================
+# 🔐 SECURITY & AUTH
+# =================================================================
+VITE_AUTH_STORAGE_KEY=courier_auth_token_v1
+VITE_PUBLIC_ENCRYPTION_KEY=-----BEGIN PUBLIC KEY-----...  
+
+# =================================================================
+# 🚀 FEATURE FLAGS (control de módulos)
+# =================================================================
+VITE_FEATURE_AUTH=true
+VITE_FEATURE_USERS=true
+VITE_FEATURE_ORDERS=true
+VITE_FEATURE_PRODUCTS=true
+VITE_FEATURE_WAREHOUSES=true
+VITE_FEATURE_ADDRESSES=true
+VITE_FEATURE_CARRIERS=false
+VITE_FEATURE_ZONES=false
+
+# =================================================================
+# 📱 PLATFORM BEHAVIOR
+# =================================================================
+VITE_UI_MODE=auto        # web | desktop | mobile | auto
+VITE_LOG_LEVEL=debug
+VITE_APP_VERSION=0.9.0-beta
+```
+
+---
+
+## 4. Estructura del proyecto (feature-based)
+
+Organización pensada para escalar: cada `feature` contiene UI, hooks, services, tipos y tests.
 
 ```
 src/
-  features/
-    auth/
-      components/
-      pages/
-      hooks/
-      services/
-      types.ts
-      tests/
-    productos/
-    pedidos/
-    carrito/
-    direcciones/
-    usuarios/   # admin
-    perfil/
-    dashboard/
-    settings/
-  shared/
-    ui/        # design system: atoms, molecules
-    api/       # client generado, axios/fetch wrapper
-    hooks/     # useAuth, useToast, etc.
-    libs/      # validation schemas
-    stores/    # auth minimal context
-    tauri/     # wrappers para APIs nativas
-  routes/
-  pages/_app.tsx
-  main.tsx
-  types/
-  assets/
-  openapi/    # OpenAPI spec + scripts de generación
-vite.config.ts
-tauri.conf.json
-package.json
-.env.*
+├── app/                  # Providers (QueryClient, AuthProvider, Router)
+├── assets/
+├── components/           # Atoms y componentes compartidos
+│   └── ui/               # shadcn/ui wrappers
+├── features/             # Módulos de negocio (mapa directo al backend)
+│   ├── auth/
+│   ├── users/
+│   ├── profiles/
+│   ├── orders/
+│   ├── products/
+│   ├── warehouses/
+│   └── addresses/
+├── hooks/                # Hooks transversales
+├── lib/                  # axios instance, helpers, cn
+├── routes/               # Definición de rutas (file-based o central)
+└── main.tsx
 ```
 
----
-
-## 2. Archivo `.env` (ejemplo)
-
-> Nota: variables sensibles deben guardarse en el gestor de secretos del CI o en el sistema operativo. Usar `.env.development` para desarrollo local.
-
-```env
-# Frontend & Tauri
-VITE_APP_API_BASE=https://api.example.com
-VITE_APP_SUPABASE_URL=https://xxxx.supabase.co
-VITE_APP_SUPABASE_ANON_KEY=pk.xxx
-VITE_APP_OPENAPI_URL=https://api.example.com/openapi.json
-
-# Feature toggles
-VITE_FEATURE_ENABLE_REALTIME=true
-VITE_FEATURE_ENABLE_NATIVE_PRINT=true
-
-# Maps / External services
-VITE_MAPBOX_KEY=pk.xxx
-VITE_GOOGLE_MAPS_KEY=xxxx
-
-# Sentry / Analytics
-VITE_SENTRY_DSN=https://...
-VITE_GA_MEASUREMENT_ID=G-XXXX
-
-# Tauri (valores para el runtime Rust, no exponer al cliente web)
-TAURI_RUST_ENV_SUPABASE_JWT_SECRET=xxxxx
-TAURI_ALLOWLIST_HTTP=true
-
-# Local DB (Tauri)
-VITE_SQLITE_DB_PATH=app_db.sqlite
-
-# Metadata
-VITE_APP_NAME=CourierApp
-VITE_APP_VERSION=0.1.0
-```
-
-Seguridad: nunca publicar claves privadas ni el `SUPABASE_SERVICE_ROLE` en el frontend. Guardar secretos en CI/Secrets.
+Cada feature incluye:
+- `components/` (UI específico)
+- `api/` (hooks de React Query: useX, useXMutation)
+- `types/` (Zod schemas + tipos TS generados)
+- `pages/` (si aplica)
+- `tests/` (Vitest + Testing Library)
 
 ---
 
-## 3. Dependencias recomendadas (frontend)
+## 5. Metodología: TDD-Kanban
 
-- Core / UI:
-  - react, react-dom, react-router-dom, vite
-  - tailwindcss (o la UI library elegida)
-  - headlessui / radix-ui / mantine / chakra (elige una)
-- Data fetching / state:
-  - @tanstack/react-query
-  - react-hook-form + zod
-  - axios (o ky)
-- OpenAPI & types:
-  - openapi-typescript (o swagger-typescript-api / openapi-generator)
-- Utilidades:
-  - date-fns, clsx, i18next, uuid
-- Testing / Dev:
-  - vitest, @testing-library/react, msw, prettier, eslint
-- Tauri (frontend):
-  - @tauri-apps/api
+Principio: una feature no existe hasta que su suite de tests pasa.
 
-Ejemplo mínimo de `package.json` (dependencias clave):
+Flujo Kanban (columnas):
+1. Specs (Backlog): escribir tests de aceptación (fallarán inicialmente).
+2. Red (Implementation): implementar componentes y hooks; tests pueden fallar.
+3. Green (Refine): pasar tests; integración con backend correcta (200 OK).
+4. Refactor (UX/UI): pulido visual y limpieza del código.
+5. Ship: activar feature flag y mergear a `main`.
 
-```json
-{
-  "dependencies": {
-    "react": "^18.x",
-    "react-dom": "^18.x",
-    "react-router-dom": "^6.x",
-    "@tanstack/react-query": "^4.x",
-    "axios": "^1.x",
-    "react-hook-form": "^7.x",
-    "zod": "^3.x",
-    "tailwindcss": "^3.x",
-    "@tauri-apps/api": "^2.x"
-  },
-  "devDependencies": {
-    "vite": "^5.x",
-    "typescript": "^5.x",
-    "openapi-typescript": "^14.x",
-    "vitest": "^0.x",
-    "@testing-library/react": "^14.x",
-    "msw": "^1.x"
-  }
-}
-```
+Ejemplo (Orders):
+- Escribir `OrderList.test.tsx`.
+- Implementar `OrderList.tsx` y `useOrders()`.
+- Mockear con MSW en tests; pasar tests; aplicar estilos.
 
 ---
 
-## 4. Rust / Tauri (crates y plugins recomendados)
+## 6. Roadmap (alineado al Backend)
 
-- Requisitos: Rust toolchain, tauri-cli, Node.js.
-- Plugins/crates sugeridos para la app Tauri:
-  - tauri (core) con feature `api-all`
-  - tauri-plugin-updater (auto-update)
-  - tauri-plugin-store (persistencia simple)
-  - tauri-plugin-notification (notificaciones nativas)
-  - tauri-plugin-secure-storage o keyring (guardar tokens seguros)
-  - opcional: tauri-plugin-sql para SQLite local
-  - serde, serde_json, reqwest (si el backend se consulta desde Rust)
+### Fase 1 — Core Foundation (prioridad crítica)
+- Auth (1 endpoint): login minimalista, persistencia JWT segura, interceptor 401.
+- Users (7 endpoints): CRUD en modal, tabla con filtros.
+- Profiles (8 endpoints): "Mi cuenta", cambio de password.
 
----
+### Fase 2 — Logística Operativa
+- Products (11 endpoints): catálogo, búsqueda debounced y gestión de imágenes.
+- Warehouses (6 endpoints): listado y asignación de inventario.
+- Addresses (9 endpoints): formularios inteligentes y mapa.
 
-## 5. Generación de API client y types
+### Fase 3 — Transaccional
+- Orders (6 endpoints): Kanban de estados, timeline de pedidos, impresión nativa de guías.
 
-- Generar TypeScript types y client desde OpenAPI del backend ayuda a acelerar el desarrollo y mantener tipos.
-- Comando sugerido en `package.json`:
-
-```json
-"scripts": {
-  "gen:api": "openapi-typescript $VITE_APP_OPENAPI_URL --output src/types/api.ts"
-}
-```
-
-- Para generar client HTTP completo usar `swagger-typescript-api` o `openapi-generator` según preferencias.
+### Fase 4 — Expansión (pendiente backend)
+- Carriers (UI shell preparado).
+- Zones (interfaces TS preliminares).
 
 ---
 
-## 6. Implementación detallada por módulo (qué debe incluir, librerías y patrones)
+## 7. Next steps (inmediatos)
 
-### A) Auth (feature: `auth`)
-- Pages: Login, Register (si aplica), Logout, Profile
-- Components: OAuth buttons, LoginForm
-- Hooks: `useAuth` (user, token, login/logout)
-- Services: `authService` (wrap Supabase client + `/auth/me`)
-- Storage: tokens en SecureStorage (Tauri) o `localStorage` en web
-- Guards: `ProtectedRoute`, `RoleGuard`
-- Librerías: `@supabase/supabase-js`, `react-hook-form`, `zod`, `@tauri-apps/api`
-
-> Nota: El backend valida JWT emitidos por Supabase; usar `/auth/me` para sincronizar perfil y roles.
-
-### B) Productos (feature: `productos`)
-- Pages: Catálogo (grid + filters), ProductoDetalle
-- Components: `ProductCard`, `ProductGallery`, `Filters`
-- Hooks: `useProducts` (paginado) con React Query
-- Forms (admin): `ProductEditor` con subida de imágenes
-- Librerías: `@tanstack/react-query`, `react-dropzone` o integración con Supabase Storage
-
-### C) Carrito + Checkout (feature: `carrito`, `pedidos`)
-- `Cart` context (persistido localmente / Tauri store)
-- Pages: Checkout, OrderConfirmation
-- Hooks: `useCheckout` (optimistic updates)
-- Integración de pago: Stripe sandbox o mock
-- Native: impresión de recibo con API nativa de Tauri
-
-### D) Pedidos (feature: `pedidos`)
-- Pages: Mis pedidos (paginado), OrderDetail
-- Admin pages: Todos los pedidos, cambiar estado, asignar transportista
-- Hooks: `useOrders`, `useOrderMutation`
-- Real-time: Supabase Realtime o WebSocket para updates de estado
-
-### E) Direcciones (feature: `direcciones`)
-- CRUD de direcciones, integración con autofill (Google Places / Mapbox)
-- Validación con `zod` y `react-hook-form`
-
-### F) Usuarios / Admin (feature: `usuarios`)
-- Listado paginado, edición de rol/estado
-- Guard admin
-- Export CSV nativo (Tauri) y generación de PDF de facturas
-
-### G) Perfil cliente / transportista
-- Visualización y edición, historial de pedidos, subida de foto de perfil
-
-### H) Notificaciones / Nativo (feature: `notifications`)
-- Notificaciones de escritorio con plugin Tauri y fallback Push en web
-- Toaster in-app y badges, integración con tray icon y auto-launch opcional
-
-### I) Offline & Sync
-- Local DB (SQLite en Tauri) para caché y operaciones offline (carrito, borradores)
-- Sincronización background al reconectar; política de resolución de conflictos simple (last-write-wins)
-
-### J) Imágenes y archivos
-- Upload directo a Supabase Storage o mediante presigned URLs
-- Preview y edición básica (crop)
-- Export nativo de CSV/PDF via API de Tauri
+1. Scaffold: inicializar Vite + Tauri + TypeScript.
+2. UI: instalar Tailwind + shadcn/ui.
+3. Generador de features: script que crea la estructura `src/features/*`.
+4. API generation: ejecutar `openapi-typescript` contra el Swagger del backend.
+5. Configurar MSW para desarrollo sin backend.
 
 ---
 
-## 7. UI / UX / Design System
+## 8. Notas rápidas de implementación
 
-- Tailwind CSS + Radix UI / Mantine / Chakra
-- Storybook para componentes
-- Soporte de tema (light/dark), accesibilidad (a11y) e i18n (i18next)
-
----
-
-## 8. Testing & QA
-
-- Unit: Vitest + Testing Library
-- Mocks para desarrollo y tests: MSW (Mock Service Worker)
-- E2E: Playwright (incluir flujos Tauri en CI si es necesario)
-- CI: lint, unit tests, generación de client OpenAPI
+- Generar client Typescript desde OpenAPI y exponer hooks en `features/*/api`.
+- Centralizar la instancia HTTP (axios/ky) con interceptores para auth y timeouts.
+- Usar React Query para todas las llamadas server-state; persistencia local en Tauri store / SQLite para offline.
+- Guardas de rutas y role-based access control (AdminGuard) en `routes/`.
+- Integración nativa (Tauri): secure storage, notifications, file export (CSV/PDF).
 
 ---
 
-## 9. CI/CD y empaquetado
+Si quieres, puedo ahora:
+- Generar el `template` inicial de `src/features/*` (scaffold).
+- Crear un `package.json` y `tauri.conf.json` de ejemplo.
+- Generar `.env.example` listo para el repositorio.
 
-- Pipeline ejemplo (GitHub Actions):
-  - pasos: install, `gen:api`, lint, test, build web, build tauri (opcional), publicar artefactos
-- Releases: usar `tauri build` para crear instaladores y usar `tauri-plugin-updater` para auto-update.
-- Code signing: firmar builds para Windows y macOS en producción.
-
----
-
-## 10. Seguridad
-
-- Guardar tokens en `tauri-plugin-secure-storage` o keyring; no exponer secrets en el frontend
-- Configurar CSP para la webview
-- Limitar permisos en `tauri.conf.json` (allowlist)
-- Validación server-side y escape de datos en el cliente
-
----
-
-## 11. Developer Experience (rápido y sin complicaciones)
-
-- Scripts recomendados:
-  - `dev:web`: `vite`
-  - `dev:desktop`: `tauri dev`
-  - `gen:api`: regenerar tipos desde OpenAPI
-  - `storybook`
-- Scaffolding:
-  - plantilla para features (component + page + hook + service + test)
-  - generador (plop) para crear features rápido
-- Mock server (MSW) para desarrollo sin backend
-
----
-
-## 12. Timeline y milestones (ejemplo)
-
-- Sprint 0 (1 semana): Setup repo, Vite + Tauri, design system, gen:api, auth básica
-- Sprint 1 (2 semanas): Login, catálogo, detalle producto, carrito, checkout mínimo
-- Sprint 2 (2 semanas): Pedidos (mis pedidos), direcciones, profile, payments mock
-- Sprint 3 (2 semanas): Admin (users/products), product CRUD, uploads
-- Sprint 4 (2 semanas): Offline sync, native features (printing, notifications), polish + tests
-- Entrega MVP: ~7 semanas (ajustable)
-
----
-
-## 13. Features “wow” para impresionar al cliente
-
-- Offline-first con SQLite local y sync transparente
-- Live tracking de pedidos en mapa (Mapbox) con ETA y rutas
-- Generación nativa de PDF e impresión directa desde la app
-- Auto-update y native installers con tray icon y background sync
-- Escaneo/Generación de QR para confirmación de entrega
-- Integración con hardware (impresora térmica, lector de códigos)
-- Demo mode (MSW) para presentar sin backend
-
----
-
-## 14. Checklist inicial
-
-- [ ] Generar OpenAPI client y tipos
-- [ ] Crear scaffold feature template
-- [ ] Implementar auth + `useAuth` + Guards
-- [ ] Implementar productos + catálogo (paginado)
-- [ ] Implementar carrito y checkout mínimo
-- [ ] Configurar Tauri dev workflow y secure storage
-- [ ] Configurar CI (gen:api, lint, test, build)
-- [ ] Preparar scripts de release y signing
-
----
-
-## 15. Próximos pasos (opciones que puedo generar ahora)
-
-- Scaffold inicial de `src/features/*` con archivos base
-- `package.json` y `tauri.conf.json` de ejemplo
-- Un `.env.example` listo para el repositorio
-
-Indica cuál de las opciones quieres que genere y la creo inmediatamente.
+Indica cuál prefieres y lo creo inmediatamente.
