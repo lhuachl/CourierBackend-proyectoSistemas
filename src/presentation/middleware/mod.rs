@@ -1,3 +1,3 @@
 pub mod auth_middleware;
 
-pub use auth_middleware::{require_auth, optional_auth};
+pub use auth_middleware::require_auth;

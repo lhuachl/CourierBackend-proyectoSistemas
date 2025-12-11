@@ -4,6 +4,7 @@ pub mod pedido_service;
 pub mod perfil_cliente_service;
 pub mod direccion_service;
 
+pub use user_service::UserService;
 pub use pedido_service::PedidoService;
 pub use perfil_cliente_service::PerfilClienteService;
 pub use producto_service::ProductoService;

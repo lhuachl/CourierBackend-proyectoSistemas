@@ -1,6 +1,6 @@
 use axum::{
     middleware,
-    routing::{get, post, patch, delete, put},
+    routing::{get, patch, delete, put},
     Router,
 };
 use sqlx::PgPool;
@@ -10,7 +10,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use utoipa::openapi::security::{SecurityScheme, Http, HttpAuthScheme};
 
 use crate::application::dto::{
-    CreateUserDTO, UpdateUserDTO, UserResponseDTO,
+    CreateUserDTO, UpdateUserDTO, UserResponseDTO, UpdateUserRoleDTO, UpdateUserStatusDTO, UsersListResponseDTO,
     CreateProductoDTO, UpdateProductoDTO, UpdateStockDTO, UpdateEstadoProductoDTO,
     ProductoResponseDTO, ProductosListResponseDTO,
     CreatePedidoDTO, PedidoResponseDTO, PedidosListResponseDTO,
@@ -20,11 +20,13 @@ use crate::application::dto::{
     CreateDireccionDTO, UpdateDireccionDTO, CreateAlmacenDTO,
     DireccionResponseDTO, DireccionesListResponseDTO,
 };
-use crate::application::services::{PedidoService, PerfilClienteService, ProductoService, DireccionService};
-use crate::domain::repositories::{PedidoRepository, PerfilClienteRepository, ProductoRepository, DireccionRepository};
-use crate::infrastructure::repositories::{PedidoRepositoryImpl, PerfilClienteRepositoryImpl, ProductoRepositoryImpl, DireccionRepositoryImpl};
+use crate::application::services::{UserService, PedidoService, PerfilClienteService, ProductoService, DireccionService};
+use crate::domain::repositories::{UserRepository, PedidoRepository, PerfilClienteRepository, ProductoRepository, DireccionRepository};
+use crate::infrastructure::repositories::{UserRepositoryImpl, PedidoRepositoryImpl, PerfilClienteRepositoryImpl, ProductoRepositoryImpl, DireccionRepositoryImpl};
 use crate::presentation::handlers::{
     get_current_user, CurrentUserResponse, __path_get_current_user,
+    list_users, get_user, create_user, update_user, update_user_role, update_user_status, delete_user,
+    __path_list_users, __path_get_user, __path_create_user, __path_update_user, __path_update_user_role, __path_update_user_status, __path_delete_user,
     list_pedidos, get_pedido, create_pedido, 
     update_estado_pedido, assign_transportista, cancel_pedido,
     __path_list_pedidos, __path_get_pedido, __path_create_pedido,
@@ -66,6 +68,7 @@ use crate::presentation::middleware::require_auth;
     tags(
         (name = "health", description = "Health check endpoints"),
         (name = "auth", description = "Autenticación y autorización"),
+        (name = "usuarios-admin", description = "Gestión de usuarios (admin)"),
         (name = "perfiles", description = "Gestión de perfil de cliente"),
         (name = "perfiles-admin", description = "Gestión de perfiles (admin)"),
         (name = "productos", description = "Catálogo de productos (público)"),
@@ -77,7 +80,7 @@ use crate::presentation::middleware::require_auth;
     ),
     components(
         schemas(
-            CreateUserDTO, UpdateUserDTO, UserResponseDTO,
+            CreateUserDTO, UpdateUserDTO, UserResponseDTO, UpdateUserRoleDTO, UpdateUserStatusDTO, UsersListResponseDTO,
             CreateProductoDTO, UpdateProductoDTO, UpdateStockDTO, UpdateEstadoProductoDTO,
             ProductoResponseDTO, ProductosListResponseDTO,
             CreatePedidoDTO, PedidoResponseDTO, PedidosListResponseDTO,
@@ -92,6 +95,14 @@ use crate::presentation::middleware::require_auth;
     paths(
         health_check,
         get_current_user,
+        // Usuarios admin
+        list_users,
+        get_user,
+        create_user,
+        update_user,
+        update_user_role,
+        update_user_status,
+        delete_user,
         // Pedidos
         list_pedidos,
         get_pedido,
@@ -158,6 +169,10 @@ impl utoipa::Modify for SecurityAddon {
 }
 
 pub fn create_routes(pool: PgPool) -> Router {
+    // Crear repositorio y service de usuarios (Dependency Injection)
+    let user_repo: Arc<dyn UserRepository> = Arc::new(UserRepositoryImpl::new(pool.clone()));
+    let user_service = Arc::new(UserService::new(user_repo));
+
     // Crear repositorio y service de pedidos (Dependency Injection)
     let pedido_repo: Arc<dyn PedidoRepository> = Arc::new(PedidoRepositoryImpl::new(pool.clone()));
     let pedido_service = Arc::new(PedidoService::new(pedido_repo));
@@ -173,6 +188,15 @@ pub fn create_routes(pool: PgPool) -> Router {
     // Crear repositorio y service de direcciones (Dependency Injection)
     let direccion_repo: Arc<dyn DireccionRepository> = Arc::new(DireccionRepositoryImpl::new(pool.clone()));
     let direccion_service = Arc::new(DireccionService::new(direccion_repo));
+
+    // Rutas admin de usuarios (protegidas)
+    let admin_users_routes = Router::new()
+        .route("/api/admin/users", get(list_users).post(create_user))
+        .route("/api/admin/users/{id}", get(get_user).put(update_user).delete(delete_user))
+        .route("/api/admin/users/{id}/role", patch(update_user_role))
+        .route("/api/admin/users/{id}/status", patch(update_user_status))
+        .with_state(user_service)
+        .route_layer(middleware::from_fn(require_auth));
 
     // Rutas de pedidos (protegidas)
     let pedidos_routes = Router::new()
@@ -253,6 +277,7 @@ pub fn create_routes(pool: PgPool) -> Router {
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .merge(public_routes)
         .merge(auth_routes)
+        .merge(admin_users_routes)
         .merge(pedidos_routes)
         .merge(perfil_routes)
         .merge(admin_perfil_routes)
